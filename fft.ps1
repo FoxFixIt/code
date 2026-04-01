@@ -37,23 +37,15 @@ $Form.MaximizeBox = $false
 # --- Naglowek (Nowy, Wielki Art) ---
 $LabelIcon = New-Object System.Windows.Forms.Label
 $LabelIcon.Text = "
-         ⣀
-      ⠘⡏⠉⠳⢦⣄               ⢀⣴⠶⠶⠤⣄
-       ⢹⣀⣀   ⠈⠳⣤⡀        ⢠⡞⠁ ⣶⠄⢼⣧
-          ⣇ ⠧    ⠸⣿⣷⡦⣄    ⢠⣿⡤  ⡇⠘⡆ ⢻⡄
-             ⠸⡀ ⣦⣤  ⠙⠹⣕⢼⣷⣄⣠⡿⠛⠉⠉⠒⣄⣿ ⠘⣧
-             ⢧⠚⢻⣿⡷⢦ ⢿⣼⣏⣺⠟⡇   ⢀⣶⣶⣾  ⣿⣧⡀
-             ⢀⠧⡀ ⠸⣗⠈⠷⠘⠏⢻⠇   ⣿⠆⣤⣾⣿⡿⠃⢸⣿⣷⢷
-               ⠹⡟⢲⠎⠃      ⠺⠁⢰⢿⡿⠋⠃ ⡽⣷⡈⢻
-                 ⢠⡄          ⠐⠋     ⢀⣷⡟⠃⠸⡆
-               ⢀⡾⠁      ⢀      ⠘⢶⣷⣲⡛⠉ ⠰⠦⢄⣹⡄
-               ⠈⠙⠳⣆      ⣿⣷⡦⢤⣀⣰⣦⡀  ⠓⣤⡘⣕⢤⡀ ⢹⡇
-                 ⣟⡏    ⣼⠿⠛⠛⠉  ⣠⡙⠫⣤⣀  ⢱⣌⢧⠙⢦⠸⡇
-                ⢀⡟    ⠰⡟⣿          ⠉⠻⣄⢿⣞⢇  ⣷
-               ⣠⠏      ⢀⣷⣿⣦⣠⠤⠈⠡⠬⠤    ⢄⡀⠈⢳⡿⣯⢳⡄⣿
-             ⢀⣾⣥⣄⣀⣠⣤⣿⣿⡿⠙⢃⡤⠶      ⢠⣧    ⠁⣿ ⢹⡟
-             ⠈⢻⣿⣿⠏      ⣈⣤⠾⠗⠒⠒⠉⠉⠉⠑⠒⠠⢿⡀    ⢻⢢⡿⠁
-                ⠉⠙⠓⠲⠾⠿⠋          ⠑⠲⣼⠟⠁
+   /\   /\           
+  //\\_//\\     ____
+  \_     _/    /   /
+   / * * \    /^^^]
+   \_\O/_/    [   ]
+    /   \_    [   /
+    \     \_  /  /
+     [ [ /  \/ _/
+    _[ [ \  /_/
 "
 $LabelIcon.Font = New-Object System.Drawing.Font("MS Gothic", 7) # MS Gothic najlepiej czyta znaki Braille'a
 $LabelIcon.Location = New-Object System.Drawing.Point(20, 10)
