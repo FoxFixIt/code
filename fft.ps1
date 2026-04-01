@@ -1,4 +1,7 @@
-﻿Add-Type -AssemblyName System.Windows.Forms
+#Start
+ 
+ 
+ Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
 # --- Dane systemowe ---
