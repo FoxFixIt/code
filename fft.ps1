@@ -28,7 +28,7 @@ try {
 # --- Glowne okno ---
 $Form = New-Object System.Windows.Forms.Form
 $Form.Text = "FoxFix - ToolKit"
-$Form.Size = New-Object System.Drawing.Size(420, 820) # Lekko zwiekszona wysokosć dla ASCII
+$Form.Size = New-Object System.Drawing.Size(420, 820) # Lekko zwiekszona wysokosc dla ASCII
 $Form.StartPosition = "CenterScreen"
 $Form.BackColor = [System.Drawing.Color]::FromArgb(243, 243, 243)
 $Form.FormBorderStyle = "FixedDialog"
@@ -181,7 +181,7 @@ $BtnExe.Add_Click({
         return
     }
 
-    $res = [System.Windows.Forms.MessageBox]::Show("Czy chcesz uruchomić zaznaczone zadania?", "Potwierdzenie", "YesNo", "Question")
+    $res = [System.Windows.Forms.MessageBox]::Show("Czy chcesz uruchomic zaznaczone zadania?", "Potwierdzenie", "YesNo", "Question")
     if ($res -eq "Yes") {
         try {
             if ($Check1.Checked) { Start-Process powershell.exe -ArgumentList "-NoProfile -NoExit -Command `"irm 'https://christitus.com/win' | iex`"" -Verb RunAs }
