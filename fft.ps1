@@ -28,13 +28,13 @@ try {
 # --- Glowne okno ---
 $Form = New-Object System.Windows.Forms.Form
 $Form.Text = "FoxFix - ToolKit"
-$Form.Size = New-Object System.Drawing.Size(420, 820)
+$Form.Size = New-Object System.Drawing.Size(420, 820) # Lekko zwiekszona wysokosć dla ASCII
 $Form.StartPosition = "CenterScreen"
 $Form.BackColor = [System.Drawing.Color]::FromArgb(243, 243, 243)
 $Form.FormBorderStyle = "FixedDialog"
 $Form.MaximizeBox = $false
 
-# --- Naglowek (ASCII) ---
+# --- Naglowek (Zmieniony na ASCII) ---
 $AsciiArt = @"
     /\   /\             
    //\\_//\\     ____
@@ -49,7 +49,7 @@ $AsciiArt = @"
 
 $LabelAscii = New-Object System.Windows.Forms.Label
 $LabelAscii.Text = $AsciiArt
-$LabelAscii.Font = New-Object System.Drawing.Font("Consolas", 8)
+$LabelAscii.Font = New-Object System.Drawing.Font("Consolas", 8) # Czcionka monospaced
 $LabelAscii.Location = New-Object System.Drawing.Point(30, 10)
 $LabelAscii.Size = New-Object System.Drawing.Size(180, 110)
 $Form.Controls.Add($LabelAscii)
@@ -116,7 +116,7 @@ $Form.Controls.Add($Check2)
 
 $Check3 = New-Object System.Windows.Forms.CheckBox
 $Check3.Text = "Ustawienia OEM (FoxFix.it)"
-$Check3.Location = New-Object System.Drawing.Point(40, 335); $Check3.Size = New-Object New-Object System.Drawing.Size(320, 30)
+$Check3.Location = New-Object System.Drawing.Point(40, 335); $Check3.Size = New-Object System.Drawing.Size(320, 30)
 $Form.Controls.Add($Check3)
 
 $Check5 = New-Object System.Windows.Forms.CheckBox
@@ -181,7 +181,7 @@ $BtnExe.Add_Click({
         return
     }
 
-    $res = [System.Windows.Forms.MessageBox]::Show("Czy chcesz uruchomic zaznaczone zadania?", "Potwierdzenie", "YesNo", "Question")
+    $res = [System.Windows.Forms.MessageBox]::Show("Czy chcesz uruchomić zaznaczone zadania?", "Potwierdzenie", "YesNo", "Question")
     if ($res -eq "Yes") {
         try {
             if ($Check1.Checked) { Start-Process powershell.exe -ArgumentList "-NoProfile -NoExit -Command `"irm 'https://christitus.com/win' | iex`"" -Verb RunAs }
