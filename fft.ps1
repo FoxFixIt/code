@@ -14,27 +14,27 @@ try {
     $sysDrive = $env:SystemDrive
     $BLVol = Get-CimInstance -Namespace "root\CIMV2\Security\MicrosoftVolumeEncryption" -ClassName Win32_EncryptableVolume -Filter "DriveLetter='$sysDrive'" -ErrorAction Stop
     if ($BLVol.ProtectionStatus -eq 1 -or $BLVol.ProtectionStatus -eq 2) {
-        $BLStatusText = "Włączony"
+        $BLStatusText = "Wlaczony"
         $BLStatusColor = "Green"
     } else {
-        $BLStatusText = "Wyłączony"
+        $BLStatusText = "Wylaczony"
         $BLStatusColor = "Red"
     }
 } catch {
-    $BLStatusText = "Brak uprawnień Admina"
+    $BLStatusText = "Brak uprawnien Admina"
     $BLStatusColor = "Orange"
 }
 
-# --- Główne okno ---
+# --- Glowne okno ---
 $Form = New-Object System.Windows.Forms.Form
 $Form.Text = "FoxFix - ToolKit"
-$Form.Size = New-Object System.Drawing.Size(420, 820) # Lekko zwiększona wysokość dla ASCII
+$Form.Size = New-Object System.Drawing.Size(420, 820)
 $Form.StartPosition = "CenterScreen"
 $Form.BackColor = [System.Drawing.Color]::FromArgb(243, 243, 243)
 $Form.FormBorderStyle = "FixedDialog"
 $Form.MaximizeBox = $false
 
-# --- Nagłówek (Zmieniony na ASCII) ---
+# --- Naglowek (ASCII) ---
 $AsciiArt = @"
     /\   /\             
    //\\_//\\     ____
@@ -49,7 +49,7 @@ $AsciiArt = @"
 
 $LabelAscii = New-Object System.Windows.Forms.Label
 $LabelAscii.Text = $AsciiArt
-$LabelAscii.Font = New-Object System.Drawing.Font("Consolas", 8) # Czcionka monospaced
+$LabelAscii.Font = New-Object System.Drawing.Font("Consolas", 8)
 $LabelAscii.Location = New-Object System.Drawing.Point(30, 10)
 $LabelAscii.Size = New-Object System.Drawing.Size(180, 110)
 $Form.Controls.Add($LabelAscii)
@@ -116,7 +116,7 @@ $Form.Controls.Add($Check2)
 
 $Check3 = New-Object System.Windows.Forms.CheckBox
 $Check3.Text = "Ustawienia OEM (FoxFix.it)"
-$Check3.Location = New-Object System.Drawing.Point(40, 335); $Check3.Size = New-Object System.Drawing.Size(320, 30)
+$Check3.Location = New-Object System.Drawing.Point(40, 335); $Check3.Size = New-Object New-Object System.Drawing.Size(320, 30)
 $Form.Controls.Add($Check3)
 
 $Check5 = New-Object System.Windows.Forms.CheckBox
@@ -125,32 +125,32 @@ $Check5.Location = New-Object System.Drawing.Point(40, 365); $Check5.Size = New-
 $Form.Controls.Add($Check5)
 
 $Check6 = New-Object System.Windows.Forms.CheckBox
-$Check6.Text = "Otwórz ustawienia UAC"
+$Check6.Text = "Otworz ustawienia UAC"
 $Check6.Location = New-Object System.Drawing.Point(40, 410); $Check6.Size = New-Object System.Drawing.Size(320, 30)
 $Form.Controls.Add($Check6)
 
 $Check7 = New-Object System.Windows.Forms.CheckBox
-$Check7.Text = "Otwórz Panel Sterowania"
+$Check7.Text = "Otworz Panel Sterowania"
 $Check7.Location = New-Object System.Drawing.Point(40, 440); $Check7.Size = New-Object System.Drawing.Size(320, 30)
 $Form.Controls.Add($Check7)
 
 $Check10 = New-Object System.Windows.Forms.CheckBox
-$Check10.Text = "Zarządzaj BitLocker (Włącz/Wyłącz)"
+$Check10.Text = "Zarzadzaj BitLocker (Wlacz/Wylacz)"
 $Check10.Location = New-Object System.Drawing.Point(40, 470); $Check10.Size = New-Object System.Drawing.Size(320, 30)
 $Form.Controls.Add($Check10)
 
 $Check8 = New-Object System.Windows.Forms.CheckBox
-$Check8.Text = "Utwórz folder 'Programy' na pulpicie"
+$Check8.Text = "Utworz folder 'Programy' na pulpicie"
 $Check8.Location = New-Object System.Drawing.Point(40, 515); $Check8.Size = New-Object System.Drawing.Size(320, 30)
 $Form.Controls.Add($Check8)
 
 $Check9 = New-Object System.Windows.Forms.CheckBox
-$Check9.Text = "Pokaż ikonę 'Mój komputer'"
+$Check9.Text = "Pokaz ikone 'Moj komputer'"
 $Check9.Location = New-Object System.Drawing.Point(40, 545); $Check9.Size = New-Object System.Drawing.Size(320, 30)
 $Form.Controls.Add($Check9)
 
 $Check4 = New-Object System.Windows.Forms.CheckBox
-$Check4.Text = "Usuń 'Dowiedz się więcej o tym obrazie'"
+$Check4.Text = "Usun 'Dowiedz sie wiecej o tym obrazie'"
 $Check4.Location = New-Object System.Drawing.Point(40, 575); $Check4.Size = New-Object System.Drawing.Size(320, 30)
 $Form.Controls.Add($Check4)
 
@@ -177,11 +177,11 @@ $BtnExe.Font = New-Object System.Drawing.Font("Segoe UI", 10, [System.Drawing.Fo
 
 $BtnExe.Add_Click({
     if (-not ($Check1.Checked -or $Check2.Checked -or $Check3.Checked -or $Check4.Checked -or $Check5.Checked -or $Check6.Checked -or $Check7.Checked -or $Check8.Checked -or $Check9.Checked -or $Check10.Checked)) {
-        [System.Windows.Forms.MessageBox]::Show("Nic nie zaznaczono!", "FoxFix - Błąd")
+        [System.Windows.Forms.MessageBox]::Show("Nic nie zaznaczono!", "FoxFix - Blad")
         return
     }
 
-    $res = [System.Windows.Forms.MessageBox]::Show("Czy chcesz uruchomić zaznaczone zadania?", "Potwierdzenie", "YesNo", "Question")
+    $res = [System.Windows.Forms.MessageBox]::Show("Czy chcesz uruchomic zaznaczone zadania?", "Potwierdzenie", "YesNo", "Question")
     if ($res -eq "Yes") {
         try {
             if ($Check1.Checked) { Start-Process powershell.exe -ArgumentList "-NoProfile -NoExit -Command `"irm 'https://christitus.com/win' | iex`"" -Verb RunAs }
@@ -213,7 +213,7 @@ $BtnExe.Add_Click({
                 $batPathPC = "$env:TEMP\FoxFix_PC.bat"; Set-Content -Path $batPathPC -Value $regScriptPC -Encoding UTF8
                 Start-Process cmd.exe -ArgumentList "/c `"$batPathPC`"" -Verb RunAs
             }
-        } catch { [System.Windows.Forms.MessageBox]::Show("Błąd: $_", "Błąd") }
+        } catch { [System.Windows.Forms.MessageBox]::Show("Blad: $_", "Blad") }
     }
 })
 $Form.Controls.Add($BtnExe)
