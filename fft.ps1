@@ -14,62 +14,70 @@ try {
     $sysDrive = $env:SystemDrive
     $BLVol = Get-CimInstance -Namespace "root\CIMV2\Security\MicrosoftVolumeEncryption" -ClassName Win32_EncryptableVolume -Filter "DriveLetter='$sysDrive'" -ErrorAction Stop
     if ($BLVol.ProtectionStatus -eq 1 -or $BLVol.ProtectionStatus -eq 2) {
-        $BLStatusText = "Wlaczony"
+        $BLStatusText = "Włączony"
         $BLStatusColor = "Green"
     } else {
-        $BLStatusText = "Wylaczony"
+        $BLStatusText = "Wyłączony"
         $BLStatusColor = "Red"
     }
 } catch {
-    $BLStatusText = "Brak uprawnien Admina"
+    $BLStatusText = "Brak uprawnień Admina"
     $BLStatusColor = "Orange"
 }
 
-# --- Glowne okno ---
+# --- Główne okno ---
 $Form = New-Object System.Windows.Forms.Form
 $Form.Text = "FoxFix - ToolKit"
-$Form.Size = New-Object System.Drawing.Size(460, 850) # Zwiekszylem troche wysokosc na ten wielki art
+$Form.Size = New-Object System.Drawing.Size(420, 820) # Lekko zwiększona wysokość dla ASCII
 $Form.StartPosition = "CenterScreen"
 $Form.BackColor = [System.Drawing.Color]::FromArgb(243, 243, 243)
 $Form.FormBorderStyle = "FixedDialog"
 $Form.MaximizeBox = $false
 
-# --- Naglowek (Nowy, Wielki Art) ---
-$LabelIcon = New-Object System.Windows.Forms.Label
-$LabelIcon.Text = "
-   /\   /\           
-  //\\_//\\     ____
-  \_     _/    /   /
-   / * * \    /^^^]
-   \_\O/_/    [   ]
-    /   \_    [   /
-    \     \_  /  /
-     [ [ /  \/ _/
-    _[ [ \  /_/
-"
-$LabelIcon.Font = New-Object System.Drawing.Font("MS Gothic", 7) # MS Gothic najlepiej czyta znaki Braille'a
-$LabelIcon.Location = New-Object System.Drawing.Point(20, 10)
-$LabelIcon.Size = New-Object System.Drawing.Size(420, 240)
-$LabelIcon.ForeColor = [System.Drawing.Color]::FromArgb(211, 84, 0)
-$Form.Controls.Add($LabelIcon)
+# --- Nagłówek (Zmieniony na ASCII) ---
+$AsciiArt = @"
+    /\   /\             
+   //\\_//\\     ____
+   \_     _/    /   /
+    / * * \    /^^^]
+    \_\O/_/    [   ]
+     /   \_    [   /
+     \     \_  /  /
+      [ [ /  \/ _/
+     _[ [ \  /_/
+"@
+
+$LabelAscii = New-Object System.Windows.Forms.Label
+$LabelAscii.Text = $AsciiArt
+$LabelAscii.Font = New-Object System.Drawing.Font("Consolas", 8) # Czcionka monospaced
+$LabelAscii.Location = New-Object System.Drawing.Point(30, 10)
+$LabelAscii.Size = New-Object System.Drawing.Size(180, 110)
+$Form.Controls.Add($LabelAscii)
 
 $LabelTitle = New-Object System.Windows.Forms.Label
-$LabelTitle.Text = "FoxFix ToolKit"
-$LabelTitle.Font = New-Object System.Drawing.Font("Segoe UI", 18, [System.Drawing.FontStyle]::Bold)
-$LabelTitle.ForeColor = [System.Drawing.Color]::Black
-$LabelTitle.Location = New-Object System.Drawing.Point(120, 250)
-$LabelTitle.Size = New-Object System.Drawing.Size(250, 35)
+$LabelTitle.Text = "FoxFix"
+$LabelTitle.Font = New-Object System.Drawing.Font("Segoe UI", 24, [System.Drawing.FontStyle]::Bold)
+$LabelTitle.ForeColor = [System.Drawing.Color]::FromArgb(211, 84, 0)
+$LabelTitle.Location = New-Object System.Drawing.Point(210, 25)
+$LabelTitle.Size = New-Object System.Drawing.Size(150, 45)
 $Form.Controls.Add($LabelTitle)
+
+$LabelSub = New-Object System.Windows.Forms.Label
+$LabelSub.Text = "ToolKit"
+$LabelSub.Font = New-Object System.Drawing.Font("Segoe UI", 12)
+$LabelSub.ForeColor = [System.Drawing.Color]::Gray
+$LabelSub.Location = New-Object System.Drawing.Point(213, 65)
+$Form.Controls.Add($LabelSub)
 
 # --- Sekcja Status ---
 $LabelStatusTitle = New-Object System.Windows.Forms.Label
 $LabelStatusTitle.Text = "Status Systemu"
 $LabelStatusTitle.Font = New-Object System.Drawing.Font("Segoe UI", 11, [System.Drawing.FontStyle]::Bold)
-$LabelStatusTitle.Location = New-Object System.Drawing.Point(30, 290)
+$LabelStatusTitle.Location = New-Object System.Drawing.Point(30, 130)
 $Form.Controls.Add($LabelStatusTitle)
 
 $PanelStatus = New-Object System.Windows.Forms.Panel
-$PanelStatus.Location = New-Object System.Drawing.Point(30, 315)
+$PanelStatus.Location = New-Object System.Drawing.Point(30, 155)
 $PanelStatus.Size = New-Object System.Drawing.Size(345, 85)
 $Form.Controls.Add($PanelStatus)
 
@@ -95,63 +103,85 @@ $LabelBLVal.Location = New-Object System.Drawing.Point(10, 55)
 $LabelBLVal.Size = New-Object System.Drawing.Size(320, 20)
 $PanelStatus.Controls.Add($LabelBLVal)
 
-# --- Checkboxy (Poprawione napisy) ---
+# --- Lista Opcji ---
 $Check1 = New-Object System.Windows.Forms.CheckBox
-$Check1.Text = "WinUtil (Chris Titus)"; $Check1.Location = New-Object System.Drawing.Point(40, 410); $Check1.Size = New-Object System.Drawing.Size(320, 30)
+$Check1.Text = "WinUtil (Chris Titus)"
+$Check1.Location = New-Object System.Drawing.Point(40, 260); $Check1.Size = New-Object System.Drawing.Size(320, 30)
 $Form.Controls.Add($Check1)
 
 $Check2 = New-Object System.Windows.Forms.CheckBox
-$Check2.Text = "Aktywator Windows (MAS)"; $Check2.Location = New-Object System.Drawing.Point(40, 440); $Check2.Size = New-Object System.Drawing.Size(320, 30)
+$Check2.Text = "Aktywator Windows (MAS)"
+$Check2.Location = New-Object System.Drawing.Point(40, 290); $Check2.Size = New-Object System.Drawing.Size(320, 30)
 $Form.Controls.Add($Check2)
 
 $Check3 = New-Object System.Windows.Forms.CheckBox
-$Check3.Text = "Ustawienia OEM (FoxFix.it)"; $Check3.Location = New-Object System.Drawing.Point(40, 480); $Check3.Size = New-Object System.Drawing.Size(320, 30)
+$Check3.Text = "Ustawienia OEM (FoxFix.it)"
+$Check3.Location = New-Object System.Drawing.Point(40, 335); $Check3.Size = New-Object System.Drawing.Size(320, 30)
 $Form.Controls.Add($Check3)
 
 $Check5 = New-Object System.Windows.Forms.CheckBox
-$Check5.Text = "Winget: Instalacja pakietu aplikacji"; $Check5.Location = New-Object System.Drawing.Point(40, 510); $Check5.Size = New-Object System.Drawing.Size(320, 30)
+$Check5.Text = "Winget: Instalacja pakietu aplikacji"
+$Check5.Location = New-Object System.Drawing.Point(40, 365); $Check5.Size = New-Object System.Drawing.Size(320, 30)
 $Form.Controls.Add($Check5)
 
 $Check6 = New-Object System.Windows.Forms.CheckBox
-$Check6.Text = "Otworz ustawienia UAC"; $Check6.Location = New-Object System.Drawing.Point(40, 550); $Check6.Size = New-Object System.Drawing.Size(320, 30)
+$Check6.Text = "Otwórz ustawienia UAC"
+$Check6.Location = New-Object System.Drawing.Point(40, 410); $Check6.Size = New-Object System.Drawing.Size(320, 30)
 $Form.Controls.Add($Check6)
 
 $Check7 = New-Object System.Windows.Forms.CheckBox
-$Check7.Text = "Otworz Panel Sterowania"; $Check7.Location = New-Object System.Drawing.Point(40, 580); $Check7.Size = New-Object System.Drawing.Size(320, 30)
+$Check7.Text = "Otwórz Panel Sterowania"
+$Check7.Location = New-Object System.Drawing.Point(40, 440); $Check7.Size = New-Object System.Drawing.Size(320, 30)
 $Form.Controls.Add($Check7)
 
 $Check10 = New-Object System.Windows.Forms.CheckBox
-$Check10.Text = "Zarzadzaj BitLocker (Wlacz/Wylacz)"; $Check10.Location = New-Object System.Drawing.Point(40, 610); $Check10.Size = New-Object System.Drawing.Size(320, 30)
+$Check10.Text = "Zarządzaj BitLocker (Włącz/Wyłącz)"
+$Check10.Location = New-Object System.Drawing.Point(40, 470); $Check10.Size = New-Object System.Drawing.Size(320, 30)
 $Form.Controls.Add($Check10)
 
 $Check8 = New-Object System.Windows.Forms.CheckBox
-$Check8.Text = "Utworz folder 'Programy' na pulpicie"; $Check8.Location = New-Object System.Drawing.Point(40, 650); $Check8.Size = New-Object System.Drawing.Size(320, 30)
+$Check8.Text = "Utwórz folder 'Programy' na pulpicie"
+$Check8.Location = New-Object System.Drawing.Point(40, 515); $Check8.Size = New-Object System.Drawing.Size(320, 30)
 $Form.Controls.Add($Check8)
 
 $Check9 = New-Object System.Windows.Forms.CheckBox
-$Check9.Text = "Pokaz ikone 'Moj komputer'"; $Check9.Location = New-Object System.Drawing.Point(40, 680); $Check9.Size = New-Object System.Drawing.Size(320, 30)
+$Check9.Text = "Pokaż ikonę 'Mój komputer'"
+$Check9.Location = New-Object System.Drawing.Point(40, 545); $Check9.Size = New-Object System.Drawing.Size(320, 30)
 $Form.Controls.Add($Check9)
 
 $Check4 = New-Object System.Windows.Forms.CheckBox
-$Check4.Text = "Usun 'Dowiedz sie wiecej o tym obrazie'"; $Check4.Location = New-Object System.Drawing.Point(40, 710); $Check4.Size = New-Object System.Drawing.Size(320, 30)
+$Check4.Text = "Usuń 'Dowiedz się więcej o tym obrazie'"
+$Check4.Location = New-Object System.Drawing.Point(40, 575); $Check4.Size = New-Object System.Drawing.Size(320, 30)
 $Form.Controls.Add($Check4)
 
 # --- Przyciski ---
 $BtnAll = New-Object System.Windows.Forms.Button
-$BtnAll.Text = "Zaznacz wszystko"; $BtnAll.Location = New-Object System.Drawing.Point(30, 750); $BtnAll.Size = New-Object System.Drawing.Size(130, 40); $BtnAll.FlatStyle = "Flat"
-$BtnAll.Add_Click({ $Check1.Checked = $Check2.Checked = $Check3.Checked = $Check4.Checked = $Check5.Checked = $Check6.Checked = $Check7.Checked = $Check8.Checked = $Check9.Checked = $Check10.Checked = $true })
+$BtnAll.Text = "Zaznacz wszystko"
+$BtnAll.Location = New-Object System.Drawing.Point(30, 680)
+$BtnAll.Size = New-Object System.Drawing.Size(130, 40)
+$BtnAll.FlatStyle = "Flat"
+$BtnAll.BackColor = [System.Drawing.Color]::LightGray
+$BtnAll.Add_Click({ 
+    $Check1.Checked = $Check2.Checked = $Check3.Checked = $Check4.Checked = $Check5.Checked = $Check6.Checked = $Check7.Checked = $Check8.Checked = $Check9.Checked = $Check10.Checked = $true 
+})
 $Form.Controls.Add($BtnAll)
 
 $BtnExe = New-Object System.Windows.Forms.Button
-$BtnExe.Text = "Wykonaj"; $BtnExe.Location = New-Object System.Drawing.Point(245, 750); $BtnExe.Size = New-Object System.Drawing.Size(130, 40); $BtnExe.FlatStyle = "Flat"
-$BtnExe.BackColor = [System.Drawing.Color]::FromArgb(211, 84, 0); $BtnExe.ForeColor = [System.Drawing.Color]::White; $BtnExe.Font = New-Object System.Drawing.Font("Segoe UI", 10, [System.Drawing.FontStyle]::Bold)
+$BtnExe.Text = "Wykonaj"
+$BtnExe.Location = New-Object System.Drawing.Point(245, 680)
+$BtnExe.Size = New-Object System.Drawing.Size(130, 40)
+$BtnExe.FlatStyle = "Flat"
+$BtnExe.BackColor = [System.Drawing.Color]::FromArgb(211, 84, 0)
+$BtnExe.ForeColor = [System.Drawing.Color]::White
+$BtnExe.Font = New-Object System.Drawing.Font("Segoe UI", 10, [System.Drawing.FontStyle]::Bold)
 
 $BtnExe.Add_Click({
     if (-not ($Check1.Checked -or $Check2.Checked -or $Check3.Checked -or $Check4.Checked -or $Check5.Checked -or $Check6.Checked -or $Check7.Checked -or $Check8.Checked -or $Check9.Checked -or $Check10.Checked)) {
-        [System.Windows.Forms.MessageBox]::Show("Nic nie zaznaczono!", "FoxFix - Blad")
+        [System.Windows.Forms.MessageBox]::Show("Nic nie zaznaczono!", "FoxFix - Błąd")
         return
     }
-    $res = [System.Windows.Forms.MessageBox]::Show("Czy chcesz uruchomic zaznaczone zadania?", "Potwierdzenie", "YesNo", "Question")
+
+    $res = [System.Windows.Forms.MessageBox]::Show("Czy chcesz uruchomić zaznaczone zadania?", "Potwierdzenie", "YesNo", "Question")
     if ($res -eq "Yes") {
         try {
             if ($Check1.Checked) { Start-Process powershell.exe -ArgumentList "-NoProfile -NoExit -Command `"irm 'https://christitus.com/win' | iex`"" -Verb RunAs }
@@ -183,7 +213,7 @@ $BtnExe.Add_Click({
                 $batPathPC = "$env:TEMP\FoxFix_PC.bat"; Set-Content -Path $batPathPC -Value $regScriptPC -Encoding UTF8
                 Start-Process cmd.exe -ArgumentList "/c `"$batPathPC`"" -Verb RunAs
             }
-        } catch { [System.Windows.Forms.MessageBox]::Show("Blad: $_", "Blad") }
+        } catch { [System.Windows.Forms.MessageBox]::Show("Błąd: $_", "Błąd") }
     }
 })
 $Form.Controls.Add($BtnExe)
