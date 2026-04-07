@@ -25,16 +25,16 @@ try {
     $BLStatusColor = "Orange"
 }
 
-# --- Glowne okno ---
+# --- Glowne okno (Zoptymalizowana wysokosc) ---
 $Form = New-Object System.Windows.Forms.Form
 $Form.Text = "FoxFix - ToolKit"
-$Form.Size = New-Object System.Drawing.Size(420, 820) # Lekko zwiekszona wysokosc dla ASCII
+$Form.Size = New-Object System.Drawing.Size(420, 720) 
 $Form.StartPosition = "CenterScreen"
 $Form.BackColor = [System.Drawing.Color]::FromArgb(243, 243, 243)
 $Form.FormBorderStyle = "FixedDialog"
 $Form.MaximizeBox = $false
 
-# --- Naglowek (Zmieniony na ASCII) ---
+# --- Naglowek (ASCII) ---
 $AsciiArt = @"
     /\   /\             
    //\\_//\\     ____
@@ -49,7 +49,7 @@ $AsciiArt = @"
 
 $LabelAscii = New-Object System.Windows.Forms.Label
 $LabelAscii.Text = $AsciiArt
-$LabelAscii.Font = New-Object System.Drawing.Font("Consolas", 8) # Czcionka monospaced
+$LabelAscii.Font = New-Object System.Drawing.Font("Consolas", 8)
 $LabelAscii.Location = New-Object System.Drawing.Point(30, 10)
 $LabelAscii.Size = New-Object System.Drawing.Size(180, 110)
 $Form.Controls.Add($LabelAscii)
@@ -103,72 +103,78 @@ $LabelBLVal.Location = New-Object System.Drawing.Point(10, 55)
 $LabelBLVal.Size = New-Object System.Drawing.Size(320, 20)
 $PanelStatus.Controls.Add($LabelBLVal)
 
-# --- Lista Opcji ---
+# --- Lista Opcji (Zaciesnione) ---
 $Check1 = New-Object System.Windows.Forms.CheckBox
 $Check1.Text = "WinUtil (Chris Titus)"
-$Check1.Location = New-Object System.Drawing.Point(40, 260); $Check1.Size = New-Object System.Drawing.Size(320, 30)
+$Check1.Location = New-Object System.Drawing.Point(40, 250); $Check1.Size = New-Object System.Drawing.Size(320, 25)
 $Form.Controls.Add($Check1)
 
 $Check2 = New-Object System.Windows.Forms.CheckBox
 $Check2.Text = "Aktywator Windows (MAS)"
-$Check2.Location = New-Object System.Drawing.Point(40, 290); $Check2.Size = New-Object System.Drawing.Size(320, 30)
+$Check2.Location = New-Object System.Drawing.Point(40, 275); $Check2.Size = New-Object System.Drawing.Size(320, 25)
 $Form.Controls.Add($Check2)
 
 $Check3 = New-Object System.Windows.Forms.CheckBox
 $Check3.Text = "Ustawienia OEM (FoxFix.it)"
-$Check3.Location = New-Object System.Drawing.Point(40, 335); $Check3.Size = New-Object System.Drawing.Size(320, 30)
+$Check3.Location = New-Object System.Drawing.Point(40, 315); $Check3.Size = New-Object System.Drawing.Size(320, 25)
 $Form.Controls.Add($Check3)
 
 $Check5 = New-Object System.Windows.Forms.CheckBox
 $Check5.Text = "Winget: Instalacja pakietu aplikacji"
-$Check5.Location = New-Object System.Drawing.Point(40, 365); $Check5.Size = New-Object System.Drawing.Size(320, 30)
+$Check5.Location = New-Object System.Drawing.Point(40, 340); $Check5.Size = New-Object System.Drawing.Size(320, 25)
 $Form.Controls.Add($Check5)
 
 $Check6 = New-Object System.Windows.Forms.CheckBox
 $Check6.Text = "Otworz ustawienia UAC"
-$Check6.Location = New-Object System.Drawing.Point(40, 410); $Check6.Size = New-Object System.Drawing.Size(320, 30)
+$Check6.Location = New-Object System.Drawing.Point(40, 380); $Check6.Size = New-Object System.Drawing.Size(320, 25)
 $Form.Controls.Add($Check6)
 
 $Check7 = New-Object System.Windows.Forms.CheckBox
 $Check7.Text = "Otworz Panel Sterowania"
-$Check7.Location = New-Object System.Drawing.Point(40, 440); $Check7.Size = New-Object System.Drawing.Size(320, 30)
+$Check7.Location = New-Object System.Drawing.Point(40, 405); $Check7.Size = New-Object System.Drawing.Size(320, 25)
 $Form.Controls.Add($Check7)
 
 $Check10 = New-Object System.Windows.Forms.CheckBox
 $Check10.Text = "Zarzadzaj BitLocker (Wlacz/Wylacz)"
-$Check10.Location = New-Object System.Drawing.Point(40, 470); $Check10.Size = New-Object System.Drawing.Size(320, 30)
+$Check10.Location = New-Object System.Drawing.Point(40, 430); $Check10.Size = New-Object System.Drawing.Size(320, 25)
 $Form.Controls.Add($Check10)
 
+$CheckBattery = New-Object System.Windows.Forms.CheckBox
+$CheckBattery.Text = "Generuj raport baterii (Pulpit)"
+$CheckBattery.Location = New-Object System.Drawing.Point(40, 455); $CheckBattery.Size = New-Object System.Drawing.Size(320, 25)
+$Form.Controls.Add($CheckBattery)
+
+# Mniejszy odstep przed kolejna sekcja
 $Check8 = New-Object System.Windows.Forms.CheckBox
 $Check8.Text = "Utworz folder 'Programy' na pulpicie"
-$Check8.Location = New-Object System.Drawing.Point(40, 515); $Check8.Size = New-Object System.Drawing.Size(320, 30)
+$Check8.Location = New-Object System.Drawing.Point(40, 495); $Check8.Size = New-Object System.Drawing.Size(320, 25)
 $Form.Controls.Add($Check8)
 
 $Check9 = New-Object System.Windows.Forms.CheckBox
 $Check9.Text = "Pokaz ikone 'Moj komputer'"
-$Check9.Location = New-Object System.Drawing.Point(40, 545); $Check9.Size = New-Object System.Drawing.Size(320, 30)
+$Check9.Location = New-Object System.Drawing.Point(40, 520); $Check9.Size = New-Object System.Drawing.Size(320, 25)
 $Form.Controls.Add($Check9)
 
 $Check4 = New-Object System.Windows.Forms.CheckBox
 $Check4.Text = "Usun 'Dowiedz sie wiecej o tym obrazie'"
-$Check4.Location = New-Object System.Drawing.Point(40, 575); $Check4.Size = New-Object System.Drawing.Size(320, 30)
+$Check4.Location = New-Object System.Drawing.Point(40, 545); $Check4.Size = New-Object System.Drawing.Size(320, 25)
 $Form.Controls.Add($Check4)
 
-# --- Przyciski ---
+# --- Przyciski (Przesuniete w gore) ---
 $BtnAll = New-Object System.Windows.Forms.Button
 $BtnAll.Text = "Zaznacz wszystko"
-$BtnAll.Location = New-Object System.Drawing.Point(30, 680)
+$BtnAll.Location = New-Object System.Drawing.Point(30, 600)
 $BtnAll.Size = New-Object System.Drawing.Size(130, 40)
 $BtnAll.FlatStyle = "Flat"
 $BtnAll.BackColor = [System.Drawing.Color]::LightGray
 $BtnAll.Add_Click({ 
-    $Check1.Checked = $Check2.Checked = $Check3.Checked = $Check4.Checked = $Check5.Checked = $Check6.Checked = $Check7.Checked = $Check8.Checked = $Check9.Checked = $Check10.Checked = $true 
+    $Check1.Checked = $Check2.Checked = $Check3.Checked = $Check4.Checked = $Check5.Checked = $Check6.Checked = $Check7.Checked = $Check8.Checked = $Check9.Checked = $Check10.Checked = $CheckBattery.Checked = $true 
 })
 $Form.Controls.Add($BtnAll)
 
 $BtnExe = New-Object System.Windows.Forms.Button
 $BtnExe.Text = "Wykonaj"
-$BtnExe.Location = New-Object System.Drawing.Point(245, 680)
+$BtnExe.Location = New-Object System.Drawing.Point(245, 600)
 $BtnExe.Size = New-Object System.Drawing.Size(130, 40)
 $BtnExe.FlatStyle = "Flat"
 $BtnExe.BackColor = [System.Drawing.Color]::FromArgb(211, 84, 0)
@@ -176,7 +182,7 @@ $BtnExe.ForeColor = [System.Drawing.Color]::White
 $BtnExe.Font = New-Object System.Drawing.Font("Segoe UI", 10, [System.Drawing.FontStyle]::Bold)
 
 $BtnExe.Add_Click({
-    if (-not ($Check1.Checked -or $Check2.Checked -or $Check3.Checked -or $Check4.Checked -or $Check5.Checked -or $Check6.Checked -or $Check7.Checked -or $Check8.Checked -or $Check9.Checked -or $Check10.Checked)) {
+    if (-not ($Check1.Checked -or $Check2.Checked -or $Check3.Checked -or $Check4.Checked -or $Check5.Checked -or $Check6.Checked -or $Check7.Checked -or $Check8.Checked -or $Check9.Checked -or $Check10.Checked -or $CheckBattery.Checked)) {
         [System.Windows.Forms.MessageBox]::Show("Nic nie zaznaczono!", "FoxFix - Blad")
         return
     }
@@ -204,6 +210,13 @@ $BtnExe.Add_Click({
             if ($Check6.Checked) { Start-Process "UserAccountControlSettings.exe" }
             if ($Check7.Checked) { Start-Process "control.exe" }
             if ($Check10.Checked) { Start-Process "control.exe" -ArgumentList "/name Microsoft.BitLockerDriveEncryption" }
+            
+            if ($CheckBattery.Checked) {
+                $reportPath = "$env:USERPROFILE\Desktop\Battery_Report.html"
+                Start-Process powercfg -ArgumentList "/batteryreport /output `"$reportPath`"" -NoNewWindow -Wait
+                if (Test-Path $reportPath) { Start-Process $reportPath }
+            }
+
             if ($Check8.Checked) {
                 $programsFolder = Join-Path -Path ([Environment]::GetFolderPath("Desktop")) -ChildPath "Programy"
                 if (-not (Test-Path $programsFolder)) { New-Item -ItemType Directory -Path $programsFolder | Out-Null }
