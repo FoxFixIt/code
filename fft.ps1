@@ -1,234 +1,534 @@
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
+[System.Windows.Forms.Application]::EnableVisualStyles()
+[System.Windows.Forms.Application]::SetCompatibleTextRenderingDefault($false)
+
+# ============================================================
+#  FoxFix - ToolKit
+#  Skrypt konfiguracyjny do przygotowania nowych komputerow
+#  Windows 10 / 11 i nowsze - czysty WinForms
+# ============================================================
+
+# --- Paleta marki ---
+$ColBrand   = [System.Drawing.Color]::FromArgb(211, 84, 0)
+$ColBrandDk = [System.Drawing.Color]::FromArgb(170, 66, 0)
+$ColWhite   = [System.Drawing.Color]::White
+$ColText    = [System.Drawing.Color]::FromArgb(40, 40, 40)
+$ColOk      = [System.Drawing.Color]::FromArgb(30, 130, 30)
+$ColErr     = [System.Drawing.Color]::FromArgb(190, 30, 30)
+$ColWarn    = [System.Drawing.Color]::FromArgb(200, 120, 0)
+$ColLine    = [System.Drawing.Color]::FromArgb(230, 230, 230)
+$FontUI     = "Segoe UI"
 
 # --- Dane systemowe ---
-$OSName = (Get-CimInstance Win32_OperatingSystem).Caption
-$IsActivated = [bool](Get-CimInstance SoftwareLicensingProduct -Filter "PartialProductKey IS NOT NULL AND LicenseStatus = 1")
-$StatusText = if ($IsActivated) { "Aktywny" } else { "Nieaktywny" }
-$StatusColor = if ($IsActivated) { "Green" } else { "Red" }
+$OSName       = (Get-CimInstance Win32_OperatingSystem).Caption
+$IsActivated  = [bool](Get-CimInstance SoftwareLicensingProduct -Filter "PartialProductKey IS NOT NULL AND LicenseStatus = 1")
+$StatusText   = if ($IsActivated) { "Aktywny" } else { "Nieaktywny" }
+$StatusColor  = if ($IsActivated) { $ColOk } else { $ColErr }
 
-# --- Sprawdzanie BitLockera ---
-$BLStatusText = "Nieznany / Wymaga Admina"
-$BLStatusColor = "Orange"
+# --- BitLocker ---
+$BLStatusText  = "Nieznany / wymaga admina"
+$BLStatusColor = $ColWarn
 try {
     $sysDrive = $env:SystemDrive
     $BLVol = Get-CimInstance -Namespace "root\CIMV2\Security\MicrosoftVolumeEncryption" -ClassName Win32_EncryptableVolume -Filter "DriveLetter='$sysDrive'" -ErrorAction Stop
-    if ($BLVol.ProtectionStatus -eq 1 -or $BLVol.ProtectionStatus -eq 2) {
-        $BLStatusText = "Wlaczony"
-        $BLStatusColor = "Green"
-    } else {
-        $BLStatusText = "Wylaczony"
-        $BLStatusColor = "Red"
-    }
+    if ($BLVol.ProtectionStatus -in 1,2) { $BLStatusText = "Wlaczony"; $BLStatusColor = $ColOk }
+    else { $BLStatusText = "Wylaczony"; $BLStatusColor = $ColErr }
 } catch {
-    $BLStatusText = "Brak uprawnien Admina"
-    $BLStatusColor = "Orange"
+    $BLStatusText = "Brak uprawnien admina"; $BLStatusColor = $ColWarn
 }
 
-# --- Glowne okno (Zoptymalizowana wysokosc) ---
+$WingetOk = [bool](Get-Command winget -ErrorAction SilentlyContinue)
+
+# --- Katalog aplikacji do instalacji ---
+# Id = pakiet winget. Url = brak sensownego pakietu winget - otwiera stronic producenta
+# (AMD Adrenalin: sterownik zalezny od sprzetu, Microsoft nie ma dla niego oficjalnego
+#  pakietu w winget, wiec bezpieczniej jest otworzyc auto-detekcje AMD).
+$AppCatalog = @(
+    @{ Name = "Google Chrome";                          Id = "Google.Chrome";                       Default = $true  }
+    @{ Name = "K-Lite Codec Pack Standard";              Id = "CodecGuide.K-LiteCodecPack.Standard"; Default = $true  }
+    @{ Name = "PeaZip";                                  Id = "Giorgiotani.Peazip";                  Default = $true  }
+    @{ Name = "OnlyOffice Desktop Editors";              Id = "ONLYOFFICE.DesktopEditors";           Default = $true  }
+    @{ Name = "7-Zip";                                   Id = "7zip.7zip";                           Default = $false }
+    @{ Name = "Mozilla Firefox";                         Id = "Mozilla.Firefox";                     Default = $false }
+    @{ Name = "Adobe Acrobat Reader";                    Id = "Adobe.Acrobat.Reader.64-bit";         Default = $false }
+    @{ Name = "VLC Media Player";                        Id = "VideoLAN.VLC";                        Default = $false }
+    @{ Name = "IObit Driver Booster";                    Id = "IObit.DriverBooster";                 Default = $false }
+    @{ Name = "NVIDIA GeForce Experience";               Id = "Nvidia.GeForceExperience";             Default = $false }
+    @{ Name = "AMD Software: Adrenalin (auto-detekcja)"; Url = "https://www.amd.com/en/support";     Default = $false }
+)
+
+# --- ASCII lis (art: Todd Vargo, ascii-art.de) ---
+$AsciiArt = @"
+  /\   /\
+ //\\_//\\     ____
+ \_     _/    /   /
+  / * * \    /^^^]
+  \_\O/_/    [   ]
+   /   \_    [   /
+   \     \_  /  /
+    [ [ /  \/ _/
+   _[ [ \  /_/
+"@
+
+# ============================================================
+#  GLOWNE OKNO - 3 stale sekcje: Naglowek (Top) / Zakladki (Fill) / Przyciski+Log (Bottom)
+# ============================================================
 $Form = New-Object System.Windows.Forms.Form
 $Form.Text = "FoxFix - ToolKit"
-$Form.Size = New-Object System.Drawing.Size(420, 720) 
+$Form.ClientSize = New-Object System.Drawing.Size(560, 760)
 $Form.StartPosition = "CenterScreen"
-$Form.BackColor = [System.Drawing.Color]::FromArgb(243, 243, 243)
+$Form.BackColor = $ColWhite
 $Form.FormBorderStyle = "FixedDialog"
 $Form.MaximizeBox = $false
 
-# --- Naglowek (ASCII) ---
-$AsciiArt = @"
-    /\   /\             
-   //\\_//\\     ____
-   \_     _/    /   /
-    / * * \    /^^^]
-    \_\O/_/    [   ]
-     /   \_    [   /
-     \     \_  /  /
-      [ [ /  \/ _/
-     _[ [ \  /_/
-"@
+function New-Label {
+    param($Text, $X, $YPos, $W, $H, $Size = 9, $Bold = $false, $Color = $ColText, $Font = $FontUI, $Align = "TopLeft")
+    $lbl = New-Object System.Windows.Forms.Label
+    $lbl.Text = $Text
+    $style = if ($Bold) { [System.Drawing.FontStyle]::Bold } else { [System.Drawing.FontStyle]::Regular }
+    $lbl.Font = New-Object System.Drawing.Font($Font, $Size, $style)
+    $lbl.ForeColor = $Color
+    $lbl.Location = New-Object System.Drawing.Point($X, $YPos)
+    $lbl.Size = New-Object System.Drawing.Size($W, $H)
+    $lbl.TextAlign = [System.Drawing.ContentAlignment]::$Align
+    $lbl.BackColor = [System.Drawing.Color]::Transparent
+    return $lbl
+}
 
-$LabelAscii = New-Object System.Windows.Forms.Label
-$LabelAscii.Text = $AsciiArt
-$LabelAscii.Font = New-Object System.Drawing.Font("Consolas", 8)
-$LabelAscii.Location = New-Object System.Drawing.Point(30, 10)
-$LabelAscii.Size = New-Object System.Drawing.Size(180, 110)
-$Form.Controls.Add($LabelAscii)
+function New-CategoryHeader {
+    # Naglowek kategorii + cienka linia pod spodem. Zwraca nowa pozycje Y.
+    param($Text, $X, $YPos, $Parent, $W = 480)
+    $Parent.Controls.Add((New-Label $Text $X $YPos $W 18 9.5 $true $ColBrandDk))
+    $line = New-Object System.Windows.Forms.Panel
+    $line.Location = New-Object System.Drawing.Point($X, ($YPos + 19))
+    $line.Size = New-Object System.Drawing.Size($W, 1)
+    $line.BackColor = $ColLine
+    $Parent.Controls.Add($line)
+    return ($YPos + 27)
+}
 
-$LabelTitle = New-Object System.Windows.Forms.Label
-$LabelTitle.Text = "FoxFix"
-$LabelTitle.Font = New-Object System.Drawing.Font("Segoe UI", 24, [System.Drawing.FontStyle]::Bold)
-$LabelTitle.ForeColor = [System.Drawing.Color]::FromArgb(211, 84, 0)
-$LabelTitle.Location = New-Object System.Drawing.Point(210, 25)
-$LabelTitle.Size = New-Object System.Drawing.Size(150, 45)
-$Form.Controls.Add($LabelTitle)
+function New-Chk {
+    param($Text, $X, $YPos, $Parent)
+    $c = New-Object System.Windows.Forms.CheckBox
+    $c.Text = $Text
+    $c.Font = New-Object System.Drawing.Font($FontUI, 9)
+    $c.ForeColor = $ColText
+    $c.Location = New-Object System.Drawing.Point($X, $YPos)
+    $c.Size = New-Object System.Drawing.Size(485, 24)
+    $Parent.Controls.Add($c)
+    return $c
+}
 
-$LabelSub = New-Object System.Windows.Forms.Label
-$LabelSub.Text = "ToolKit"
-$LabelSub.Font = New-Object System.Drawing.Font("Segoe UI", 12)
-$LabelSub.ForeColor = [System.Drawing.Color]::Gray
-$LabelSub.Location = New-Object System.Drawing.Point(213, 65)
-$Form.Controls.Add($LabelSub)
+# --- SEKCJA 1: Naglowek ---
+$HeaderPanel = New-Object System.Windows.Forms.Panel
+$HeaderPanel.Dock = "Top"
+$HeaderPanel.Height = 100
+$HeaderPanel.BackColor = $ColBrand
+$Form.Controls.Add($HeaderPanel)
 
-# --- Sekcja Status ---
-$LabelStatusTitle = New-Object System.Windows.Forms.Label
-$LabelStatusTitle.Text = "Status Systemu"
-$LabelStatusTitle.Font = New-Object System.Drawing.Font("Segoe UI", 11, [System.Drawing.FontStyle]::Bold)
-$LabelStatusTitle.Location = New-Object System.Drawing.Point(30, 130)
-$Form.Controls.Add($LabelStatusTitle)
+$LabelAscii = New-Label $AsciiArt 20 8 190 88 8 $false $ColWhite "Consolas"
+$HeaderPanel.Controls.Add($LabelAscii)
+$LabelTitle = New-Label "FoxFix" 215 18 250 42 22 $true $ColWhite
+$HeaderPanel.Controls.Add($LabelTitle)
+$LabelSub = New-Label "ToolKit - konfiguracja komputera" 218 58 320 20 10 $false ([System.Drawing.Color]::FromArgb(255,225,205))
+$HeaderPanel.Controls.Add($LabelSub)
 
-$PanelStatus = New-Object System.Windows.Forms.Panel
-$PanelStatus.Location = New-Object System.Drawing.Point(30, 155)
-$PanelStatus.Size = New-Object System.Drawing.Size(345, 85)
-$Form.Controls.Add($PanelStatus)
+# --- SEKCJA 3: Dol (stale widoczne przyciski + log) ---
+$BottomPanel = New-Object System.Windows.Forms.Panel
+$BottomPanel.Dock = "Bottom"
+$BottomPanel.Height = 280
+$BottomPanel.BackColor = $ColWhite
+$Form.Controls.Add($BottomPanel)
 
-$LabelOS = New-Object System.Windows.Forms.Label
-$LabelOS.Text = "System: $OSName"
-$LabelOS.Location = New-Object System.Drawing.Point(10, 5)
-$LabelOS.Size = New-Object System.Drawing.Size(320, 20)
-$PanelStatus.Controls.Add($LabelOS)
+# --- SEKCJA 2: Zakladki ---
+$Tabs = New-Object System.Windows.Forms.TabControl
+$Tabs.Dock = "Fill"
+$Tabs.Font = New-Object System.Drawing.Font($FontUI, 9.5)
+$Form.Controls.Add($Tabs)
+$Form.Controls.SetChildIndex($Tabs, 0)
 
-$LabelLic = New-Object System.Windows.Forms.Label
-$LabelLic.Text = "Licencja: $StatusText"
-$LabelLic.ForeColor = [System.Drawing.Color]::FromName($StatusColor)
-$LabelLic.Font = New-Object System.Drawing.Font("Segoe UI", 9, [System.Drawing.FontStyle]::Bold)
-$LabelLic.Location = New-Object System.Drawing.Point(10, 30)
-$LabelLic.Size = New-Object System.Drawing.Size(320, 20)
-$PanelStatus.Controls.Add($LabelLic)
+$Tab1 = New-Object System.Windows.Forms.TabPage
+$Tab1.Text = "Konfiguracja systemu"
+$Tab1.BackColor = $ColWhite
+$Tabs.TabPages.Add($Tab1)
 
-$LabelBLVal = New-Object System.Windows.Forms.Label
-$LabelBLVal.Text = "BitLocker: $BLStatusText"
-$LabelBLVal.ForeColor = [System.Drawing.Color]::FromName($BLStatusColor)
-$LabelBLVal.Font = New-Object System.Drawing.Font("Segoe UI", 9, [System.Drawing.FontStyle]::Bold)
-$LabelBLVal.Location = New-Object System.Drawing.Point(10, 55)
-$LabelBLVal.Size = New-Object System.Drawing.Size(320, 20)
-$PanelStatus.Controls.Add($LabelBLVal)
+$Tab2 = New-Object System.Windows.Forms.TabPage
+$Tab2.Text = "Aplikacje (Winget)"
+$Tab2.BackColor = $ColWhite
+$Tab2.AutoScroll = $true
+$Tabs.TabPages.Add($Tab2)
 
-# --- Lista Opcji (Zaciesnione) ---
-$Check1 = New-Object System.Windows.Forms.CheckBox
-$Check1.Text = "WinUtil (Chris Titus)"
-$Check1.Location = New-Object System.Drawing.Point(40, 250); $Check1.Size = New-Object System.Drawing.Size(320, 25)
-$Form.Controls.Add($Check1)
+# ------------------ TAB 1a: Status systemu - PRZYPIETY na gorze, sie nie przewija ------------------
+$StatusPanel = New-Object System.Windows.Forms.Panel
+$StatusPanel.Dock = "Top"
+$StatusPanel.Height = 110
+$StatusPanel.BackColor = $ColWhite
+$Tab1.Controls.Add($StatusPanel)
 
-$Check2 = New-Object System.Windows.Forms.CheckBox
-$Check2.Text = "Aktywator Windows (MAS)"
-$Check2.Location = New-Object System.Drawing.Point(40, 275); $Check2.Size = New-Object System.Drawing.Size(320, 25)
-$Form.Controls.Add($Check2)
+$GbStatus = New-Object System.Windows.Forms.GroupBox
+$GbStatus.Text = "Status systemu"
+$GbStatus.Font = New-Object System.Drawing.Font($FontUI, 9, [System.Drawing.FontStyle]::Bold)
+$GbStatus.ForeColor = $ColText
+$GbStatus.Location = New-Object System.Drawing.Point(15, 10)
+$GbStatus.Size = New-Object System.Drawing.Size(505, 95)
+$StatusPanel.Controls.Add($GbStatus)
 
-$Check3 = New-Object System.Windows.Forms.CheckBox
-$Check3.Text = "Ustawienia OEM (FoxFix.it)"
-$Check3.Location = New-Object System.Drawing.Point(40, 315); $Check3.Size = New-Object System.Drawing.Size(320, 25)
-$Form.Controls.Add($Check3)
+$GbStatus.Controls.Add((New-Label "System: $OSName" 15 25 475 20 9))
+$GbStatus.Controls.Add((New-Label "Licencja: $StatusText" 15 47 220 20 9 $true $StatusColor))
+$GbStatus.Controls.Add((New-Label "BitLocker: $BLStatusText" 250 47 240 20 9 $true $BLStatusColor))
+if (-not $WingetOk) {
+    $GbStatus.Controls.Add((New-Label "Winget NIEDOSTEPNY - zainstaluj 'App Installer' z Microsoft Store" 15 69 475 20 8 $true $ColErr))
+} else {
+    $GbStatus.Controls.Add((New-Label "Winget: dostepny" 15 69 200 20 8 $true $ColOk))
+}
 
-$Check5 = New-Object System.Windows.Forms.CheckBox
-$Check5.Text = "Winget: Instalacja pakietu aplikacji"
-$Check5.Location = New-Object System.Drawing.Point(40, 340); $Check5.Size = New-Object System.Drawing.Size(320, 25)
-$Form.Controls.Add($Check5)
+# ------------------ TAB 1b: Zadania systemowe w kategoriach - przewijane pod statusem ------------------
+$TaskPanel = New-Object System.Windows.Forms.Panel
+$TaskPanel.Dock = "Fill"
+$TaskPanel.AutoScroll = $true
+$TaskPanel.BackColor = $ColWhite
+$Tab1.Controls.Add($TaskPanel)
+$Tab1.Controls.SetChildIndex($TaskPanel, 0)
 
-$Check6 = New-Object System.Windows.Forms.CheckBox
-$Check6.Text = "Otworz ustawienia UAC"
-$Check6.Location = New-Object System.Drawing.Point(40, 380); $Check6.Size = New-Object System.Drawing.Size(320, 25)
-$Form.Controls.Add($Check6)
+$cy = 12
+$cy = New-CategoryHeader "Aktywacja i system" 15 $cy $TaskPanel
+$Check1  = New-Chk "WinUtil (Chris Titus)" 15 $cy $TaskPanel;             $cy += 27
+$Check2  = New-Chk "Aktywator Windows (MAS)" 15 $cy $TaskPanel;           $cy += 27
+$Check3  = New-Chk "Ustawienia OEM (FoxFix.it)" 15 $cy $TaskPanel;        $cy += 27
+$cy += 10
 
-$Check7 = New-Object System.Windows.Forms.CheckBox
-$Check7.Text = "Otworz Panel Sterowania"
-$Check7.Location = New-Object System.Drawing.Point(40, 405); $Check7.Size = New-Object System.Drawing.Size(320, 25)
-$Form.Controls.Add($Check7)
+$cy = New-CategoryHeader "Windows Update" 15 $cy $TaskPanel
+$CheckWuBlock   = New-Chk "Zablokuj aktualizacje Windows (ok. 30 lat)" 15 $cy $TaskPanel; $cy += 27
+$CheckWuUnblock = New-Chk "Aktywuj aktualizacje Windows (odblokuj)" 15 $cy $TaskPanel;    $cy += 27
+$cy += 10
 
-$Check10 = New-Object System.Windows.Forms.CheckBox
-$Check10.Text = "Zarzadzaj BitLocker (Wlacz/Wylacz)"
-$Check10.Location = New-Object System.Drawing.Point(40, 430); $Check10.Size = New-Object System.Drawing.Size(320, 25)
-$Form.Controls.Add($Check10)
+$cy = New-CategoryHeader "Wydajnosc i prywatnosc" 15 $cy $TaskPanel
+$CheckPower   = New-Chk "Plan zasilania: Wysoka wydajnosc" 15 $cy $TaskPanel; $cy += 27
+$CheckDebloat = New-Chk "Debloat Windows" 15 $cy $TaskPanel;                 $cy += 27
+$cy += 10
 
-$CheckBattery = New-Object System.Windows.Forms.CheckBox
-$CheckBattery.Text = "Generuj raport baterii (Pulpit)"
-$CheckBattery.Location = New-Object System.Drawing.Point(40, 455); $CheckBattery.Size = New-Object System.Drawing.Size(320, 25)
-$Form.Controls.Add($CheckBattery)
+$cy = New-CategoryHeader "Bezpieczenstwo" 15 $cy $TaskPanel
+$Check10 = New-Chk "Otworz panel BitLocker" 15 $cy $TaskPanel;   $cy += 27
+$Check6  = New-Chk "Otworz ustawienia UAC" 15 $cy $TaskPanel;    $cy += 27
+$cy += 10
 
-# Mniejszy odstep przed kolejna sekcja
-$Check8 = New-Object System.Windows.Forms.CheckBox
-$Check8.Text = "Utworz folder 'Programy' na pulpicie"
-$Check8.Location = New-Object System.Drawing.Point(40, 495); $Check8.Size = New-Object System.Drawing.Size(320, 25)
-$Form.Controls.Add($Check8)
+$cy = New-CategoryHeader "Pulpit i personalizacja" 15 $cy $TaskPanel
+$Check8 = New-Chk "Utworz folder 'Programy' na pulpicie" 15 $cy $TaskPanel;        $cy += 27
+$Check9 = New-Chk "Pokaz ikone 'Moj komputer'" 15 $cy $TaskPanel;                  $cy += 27
+$Check4 = New-Chk "Usun 'Dowiedz sie wiecej o tym obrazie'" 15 $cy $TaskPanel;      $cy += 27
+$cy += 10
 
-$Check9 = New-Object System.Windows.Forms.CheckBox
-$Check9.Text = "Pokaz ikone 'Moj komputer'"
-$Check9.Location = New-Object System.Drawing.Point(40, 520); $Check9.Size = New-Object System.Drawing.Size(320, 25)
-$Form.Controls.Add($Check9)
+$cy = New-CategoryHeader "Narzedzia i raporty" 15 $cy $TaskPanel
+$Check7       = New-Chk "Otworz Panel Sterowania" 15 $cy $TaskPanel;               $cy += 27
+$CheckBattery = New-Chk "Generuj raport baterii (Pulpit)" 15 $cy $TaskPanel;        $cy += 27
 
-$Check4 = New-Object System.Windows.Forms.CheckBox
-$Check4.Text = "Usun 'Dowiedz sie wiecej o tym obrazie'"
-$Check4.Location = New-Object System.Drawing.Point(40, 545); $Check4.Size = New-Object System.Drawing.Size(320, 25)
-$Form.Controls.Add($Check4)
+# ------------------ TAB 2: Aplikacje ------------------
+$AppList = New-Object System.Windows.Forms.CheckedListBox
+$AppList.Location = New-Object System.Drawing.Point(15, 15)
+$AppList.Size = New-Object System.Drawing.Size(510, 320)
+$AppList.Font = New-Object System.Drawing.Font($FontUI, 9)
+$AppList.CheckOnClick = $true
+$AppList.BorderStyle = "FixedSingle"
+$AppList.Enabled = $WingetOk
+foreach ($app in $AppCatalog) {
+    $idx = $AppList.Items.Add($app.Name)
+    if ($app.Default) { $AppList.SetItemChecked($idx, $true) }
+}
+$Tab2.Controls.Add($AppList)
+if (-not $WingetOk) {
+    $Tab2.Controls.Add((New-Label "Winget niedostepny - zainstaluj 'App Installer' z Microsoft Store." 15 345 480 20 8 $true $ColErr))
+}
 
-# --- Przyciski (Przesuniete w gore) ---
+# ------------------ Zawartosc dolu (stale widoczne) ------------------
+$by = 10
 $BtnAll = New-Object System.Windows.Forms.Button
-$BtnAll.Text = "Zaznacz wszystko"
-$BtnAll.Location = New-Object System.Drawing.Point(30, 600)
-$BtnAll.Size = New-Object System.Drawing.Size(130, 40)
+$BtnAll.Text = "Zaznacz wszystko (konfiguracja)"
+$BtnAll.Location = New-Object System.Drawing.Point(15, $by)
+$BtnAll.Size = New-Object System.Drawing.Size(245, 36)
 $BtnAll.FlatStyle = "Flat"
-$BtnAll.BackColor = [System.Drawing.Color]::LightGray
-$BtnAll.Add_Click({ 
-    $Check1.Checked = $Check2.Checked = $Check3.Checked = $Check4.Checked = $Check5.Checked = $Check6.Checked = $Check7.Checked = $Check8.Checked = $Check9.Checked = $Check10.Checked = $CheckBattery.Checked = $true 
+$BtnAll.FlatAppearance.BorderColor = [System.Drawing.Color]::LightGray
+$BtnAll.BackColor = [System.Drawing.Color]::FromArgb(235,235,235)
+$BtnAll.ForeColor = $ColText
+$BtnAll.Font = New-Object System.Drawing.Font($FontUI, 8.5)
+# Dotyczy TYLKO pierwszej zakladki (Konfiguracja systemu)
+$BtnAll.Add_Click({
+    foreach ($c in @($Check1,$Check2,$Check3,$Check4,$Check6,$Check7,$Check8,$Check9,$Check10,$CheckBattery,$CheckPower,$CheckDebloat,$CheckWuBlock,$CheckWuUnblock)) {
+        $c.Checked = $true
+    }
 })
-$Form.Controls.Add($BtnAll)
+$BottomPanel.Controls.Add($BtnAll)
+
+$BtnNone = New-Object System.Windows.Forms.Button
+$BtnNone.Text = "Odznacz wszystko"
+$BtnNone.Location = New-Object System.Drawing.Point(270, $by)
+$BtnNone.Size = New-Object System.Drawing.Size(255, 36)
+$BtnNone.FlatStyle = "Flat"
+$BtnNone.FlatAppearance.BorderColor = [System.Drawing.Color]::LightGray
+$BtnNone.BackColor = [System.Drawing.Color]::FromArgb(235,235,235)
+$BtnNone.ForeColor = $ColText
+$BtnNone.Font = New-Object System.Drawing.Font($FontUI, 8.5)
+# Czysci WSZYSTKO - obie zakladki
+$BtnNone.Add_Click({
+    foreach ($c in @($Check1,$Check2,$Check3,$Check4,$Check6,$Check7,$Check8,$Check9,$Check10,$CheckBattery,$CheckPower,$CheckDebloat,$CheckWuBlock,$CheckWuUnblock)) {
+        $c.Checked = $false
+    }
+    for ($i = 0; $i -lt $AppList.Items.Count; $i++) { $AppList.SetItemChecked($i, $false) }
+})
+$BottomPanel.Controls.Add($BtnNone)
+$by += 44
 
 $BtnExe = New-Object System.Windows.Forms.Button
 $BtnExe.Text = "Wykonaj"
-$BtnExe.Location = New-Object System.Drawing.Point(245, 600)
-$BtnExe.Size = New-Object System.Drawing.Size(130, 40)
+$BtnExe.Location = New-Object System.Drawing.Point(15, $by)
+$BtnExe.Size = New-Object System.Drawing.Size(510, 46)
 $BtnExe.FlatStyle = "Flat"
-$BtnExe.BackColor = [System.Drawing.Color]::FromArgb(211, 84, 0)
-$BtnExe.ForeColor = [System.Drawing.Color]::White
-$BtnExe.Font = New-Object System.Drawing.Font("Segoe UI", 10, [System.Drawing.FontStyle]::Bold)
+$BtnExe.FlatAppearance.BorderSize = 0
+$BtnExe.BackColor = $ColBrand
+$BtnExe.ForeColor = $ColWhite
+$BtnExe.Font = New-Object System.Drawing.Font($FontUI, 11, [System.Drawing.FontStyle]::Bold)
+$BottomPanel.Controls.Add($BtnExe)
+$by += 56
 
+$ProgressBar = New-Object System.Windows.Forms.ProgressBar
+$ProgressBar.Location = New-Object System.Drawing.Point(15, $by)
+$ProgressBar.Size = New-Object System.Drawing.Size(510, 16)
+$BottomPanel.Controls.Add($ProgressBar)
+$by += 22
+
+$StatusLabel = New-Label "Gotowy." 15 $by 510 18 8.5 $true $ColBrandDk
+$BottomPanel.Controls.Add($StatusLabel)
+$by += 22
+
+$LogBox = New-Object System.Windows.Forms.RichTextBox
+$LogBox.Location = New-Object System.Drawing.Point(15, $by)
+$LogBox.Size = New-Object System.Drawing.Size(510, 100)
+$LogBox.ReadOnly = $true
+$LogBox.BackColor = [System.Drawing.Color]::FromArgb(250,250,250)
+$LogBox.BorderStyle = "FixedSingle"
+$LogBox.Font = New-Object System.Drawing.Font("Consolas", 8.5)
+$BottomPanel.Controls.Add($LogBox)
+
+# ============================================================
+#  FUNKCJE POMOCNICZE
+# ============================================================
+
+function Write-Log {
+    param([string]$Msg, [string]$Level = "info")
+    $color = switch ($Level) { "ok" { $ColOk }; "err" { $ColErr }; default { $ColText } }
+    $LogBox.SelectionStart = $LogBox.TextLength
+    $LogBox.SelectionColor = $color
+    $LogBox.AppendText("$Msg`r`n")
+    $LogBox.ScrollToCaret()
+    [System.Windows.Forms.Application]::DoEvents()
+}
+
+function Step {
+    param([string]$Name, [scriptblock]$Action)
+    $StatusLabel.Text = "Trwa: $Name ..."
+    [System.Windows.Forms.Application]::DoEvents()
+    try {
+        & $Action
+        Write-Log "[OK]   $Name" "ok"
+    } catch {
+        Write-Log "[BLAD] $Name -> $($_.Exception.Message)" "err"
+    } finally {
+        $ProgressBar.Style = "Blocks"
+        $ProgressBar.Value = [Math]::Min($ProgressBar.Maximum, $ProgressBar.Value + 1)
+        [System.Windows.Forms.Application]::DoEvents()
+    }
+}
+
+function Install-WingetApp {
+    # Przechwytuje na biezaco stdout wingetu i wrzuca to do logu (z lekkim wciecie),
+    # dzieki czemu widac DOKLADNIE co robi w danej chwili (pobieranie, weryfikacja,
+    # instalacja...), a nie tylko sam licznik sekund.
+    param([string]$Name, [string]$Id)
+
+    $psi = New-Object System.Diagnostics.ProcessStartInfo
+    $psi.FileName = "winget"
+    $psi.Arguments = "install --id $Id -e --silent --accept-package-agreements --accept-source-agreements"
+    $psi.RedirectStandardOutput = $true
+    $psi.RedirectStandardError = $true
+    $psi.UseShellExecute = $false
+    $psi.CreateNoWindow = $true
+
+    $proc = New-Object System.Diagnostics.Process
+    $proc.StartInfo = $psi
+    $proc.Start() | Out-Null
+
+    $sw = [System.Diagnostics.Stopwatch]::StartNew()
+    $ProgressBar.Style = "Marquee"
+    $lastLine = ""
+
+    while (-not $proc.HasExited) {
+        while ($proc.StandardOutput.Peek() -ge 0) {
+            $clean = $proc.StandardOutput.ReadLine().Trim()
+            if ($clean -and $clean -ne $lastLine) {
+                Write-Log "      $clean"
+                $lastLine = $clean
+            }
+        }
+        $secs = [Math]::Floor($sw.Elapsed.TotalSeconds)
+        $StatusLabel.Text = "Trwa instalacja: $Name ... (${secs}s)"
+        [System.Windows.Forms.Application]::DoEvents()
+        Start-Sleep -Milliseconds 150
+    }
+    # dobierz resztke bufora po zakonczeniu procesu
+    while ($proc.StandardOutput.Peek() -ge 0) {
+        $clean = $proc.StandardOutput.ReadLine().Trim()
+        if ($clean -and $clean -ne $lastLine) {
+            Write-Log "      $clean"
+            $lastLine = $clean
+        }
+    }
+
+    if ($proc.ExitCode -ne 0) {
+        $errText = $proc.StandardError.ReadToEnd().Trim()
+        $suffix = if ($errText) { " -> $errText" } else { "" }
+        throw "winget zakonczyl instalacje '$Name' kodem $($proc.ExitCode)$suffix"
+    }
+}
+
+function Set-RegDword {
+    param([string]$Path, [string]$Name, [int]$Value)
+    if (-not (Test-Path $Path)) { New-Item -Path $Path -Force | Out-Null }
+    New-ItemProperty -Path $Path -Name $Name -Value $Value -PropertyType DWord -Force | Out-Null
+}
+
+function Block-WindowsUpdate {
+    try { Set-Service -Name wuauserv -StartupType Disabled -ErrorAction Stop } catch {}
+    try { Stop-Service -Name wuauserv -Force -ErrorAction Stop } catch {}
+    Set-RegDword "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" "NoAutoUpdate" 1
+    $farFuture = (Get-Date).AddYears(30).ToString("yyyy-MM-ddTHH:mm:ssZ")
+    $p = "HKLM:\SOFTWARE\Microsoft\WindowsUpdate\UX\Settings"
+    if (-not (Test-Path $p)) { New-Item -Path $p -Force | Out-Null }
+    Set-ItemProperty -Path $p -Name "PauseUpdatesExpiryTime" -Value $farFuture -Force
+    Set-ItemProperty -Path $p -Name "PauseFeatureUpdatesEndTime" -Value $farFuture -Force
+    Set-ItemProperty -Path $p -Name "PauseQualityUpdatesEndTime" -Value $farFuture -Force
+}
+
+function Unblock-WindowsUpdate {
+    Set-RegDword "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" "NoAutoUpdate" 0
+    $p = "HKLM:\SOFTWARE\Microsoft\WindowsUpdate\UX\Settings"
+    foreach ($n in @("PauseUpdatesExpiryTime","PauseFeatureUpdatesEndTime","PauseQualityUpdatesEndTime")) {
+        try { Remove-ItemProperty -Path $p -Name $n -ErrorAction SilentlyContinue } catch {}
+    }
+    try { Set-Service -Name wuauserv -StartupType Manual -ErrorAction Stop } catch {}
+    try { Start-Service -Name wuauserv -ErrorAction Stop } catch {}
+}
+
+function Set-HighPerformancePlan {
+    powercfg /setactive 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c | Out-Null
+}
+
+function Invoke-Debloat {
+    foreach ($p in @("$env:SystemRoot\System32\OneDriveSetup.exe","$env:SystemRoot\SysWOW64\OneDriveSetup.exe")) {
+        if (Test-Path $p) { Start-Process $p -ArgumentList "/uninstall" -Wait -ErrorAction SilentlyContinue }
+    }
+    $bloatPatterns = @("*Xbox*","*BingNews*","*BingWeather*","*ZuneMusic*","*ZuneVideo*","*SolitaireCollection*","*GetHelp*","*Getstarted*","*3DBuilder*","*MixedReality*","*People*")
+    foreach ($pat in $bloatPatterns) {
+        Get-AppxPackage -Name $pat -AllUsers -ErrorAction SilentlyContinue | Remove-AppxPackage -ErrorAction SilentlyContinue
+    }
+    $cdm = "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager"
+    foreach ($n in @("SubscribedContent-338388Enabled","SilentInstalledAppsEnabled","SystemPaneSuggestionsEnabled","ContentDeliveryAllowed","OemPreInstalledAppsEnabled","PreInstalledAppsEnabled")) {
+        Set-RegDword $cdm $n 0
+    }
+    Set-RegDword "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection" "AllowTelemetry" 0
+}
+
+# ============================================================
+#  WYKONANIE
+# ============================================================
 $BtnExe.Add_Click({
-    if (-not ($Check1.Checked -or $Check2.Checked -or $Check3.Checked -or $Check4.Checked -or $Check5.Checked -or $Check6.Checked -or $Check7.Checked -or $Check8.Checked -or $Check9.Checked -or $Check10.Checked -or $CheckBattery.Checked)) {
+    $sysTasksChecked = @($Check1,$Check2,$Check3,$Check4,$Check6,$Check7,$Check8,$Check9,$Check10,$CheckBattery,$CheckPower,$CheckDebloat,$CheckWuBlock,$CheckWuUnblock) | Where-Object { $_.Checked }
+    $appsChecked = @()
+    for ($i = 0; $i -lt $AppList.Items.Count; $i++) {
+        if ($AppList.GetItemChecked($i)) { $appsChecked += $AppCatalog[$i] }
+    }
+
+    if ($sysTasksChecked.Count -eq 0 -and $appsChecked.Count -eq 0) {
         [System.Windows.Forms.MessageBox]::Show("Nic nie zaznaczono!", "FoxFix - Blad")
+        return
+    }
+    if ($CheckWuBlock.Checked -and $CheckWuUnblock.Checked) {
+        [System.Windows.Forms.MessageBox]::Show("Zaznaczono jednoczesnie blokade i aktywacje aktualizacji - odznacz jedno z nich.", "FoxFix - Blad")
         return
     }
 
     $res = [System.Windows.Forms.MessageBox]::Show("Czy chcesz uruchomic zaznaczone zadania?", "Potwierdzenie", "YesNo", "Question")
-    if ($res -eq "Yes") {
-        try {
-            if ($Check1.Checked) { Start-Process powershell.exe -ArgumentList "-NoProfile -NoExit -Command `"irm 'https://christitus.com/win' | iex`"" -Verb RunAs }
-            if ($Check2.Checked) { Start-Process powershell.exe -ArgumentList "-NoProfile -NoExit -Command `"irm 'https://get.activated.win' | iex`"" -Verb RunAs }
-            if ($Check3.Checked) {
-                $oemScript = "@echo off`nreg add `"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\OEMInformation`" /v Manufacturer /t REG_SZ /d `"FoxFix.it`" /f`nreg add `"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\OEMInformation`" /v SupportPhone /t REG_SZ /d `"572 571 704`" /f`nreg add `"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\OEMInformation`" /v SupportURL /t REG_SZ /d `"https://foxfix.it/`" /f`npause"
-                $batPath = "$env:TEMP\FoxFix_OEM.bat"; Set-Content -Path $batPath -Value $oemScript -Encoding UTF8
-                Start-Process cmd.exe -ArgumentList "/c `"$batPath`"" -Verb RunAs
-            }
-            if ($Check4.Checked) {
-                $regScript = "@echo off`nREG ADD HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel /v {2cc5ca98-6485-489a-920e-b3e88a6ccce3} /t REG_DWORD /d 1 /f`npause"
-                $batPath = "$env:TEMP\FoxFix_Reg.bat"; Set-Content -Path $batPath -Value $regScript -Encoding UTF8
-                Start-Process cmd.exe -ArgumentList "/c `"$batPath`"" -Verb RunAs
-            }
-            if ($Check5.Checked) {
-                $wingetScript = "@echo off`nwinget install Google.Chrome --silent --accept-package-agreements`nwinget install CodecGuide.K-LiteCodecPack.Standard --silent`nwinget install Giorgiotani.Peazip --silent`nwinget install OnlyOffice.DesktopEditors --silent`npause"
-                $batPath = "$env:TEMP\FoxFix_Winget.bat"; Set-Content -Path $batPath -Value $wingetScript -Encoding UTF8
-                Start-Process cmd.exe -ArgumentList "/c `"$batPath`"" -Verb RunAs
-            }
-            if ($Check6.Checked) { Start-Process "UserAccountControlSettings.exe" }
-            if ($Check7.Checked) { Start-Process "control.exe" }
-            if ($Check10.Checked) { Start-Process "control.exe" -ArgumentList "/name Microsoft.BitLockerDriveEncryption" }
-            
-            if ($CheckBattery.Checked) {
-                $reportPath = "$env:USERPROFILE\Desktop\Battery_Report.html"
-                Start-Process powercfg -ArgumentList "/batteryreport /output `"$reportPath`"" -NoNewWindow -Wait
-                if (Test-Path $reportPath) { Start-Process $reportPath }
-            }
+    if ($res -ne "Yes") { return }
 
-            if ($Check8.Checked) {
-                $programsFolder = Join-Path -Path ([Environment]::GetFolderPath("Desktop")) -ChildPath "Programy"
-                if (-not (Test-Path $programsFolder)) { New-Item -ItemType Directory -Path $programsFolder | Out-Null }
-            }
-            if ($Check9.Checked) {
-                $regScriptPC = "@echo off`nREG ADD HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel /v {20D04FE0-3AEA-1069-A2D8-08002B30309D} /t REG_DWORD /d 0 /f`npause"
-                $batPathPC = "$env:TEMP\FoxFix_PC.bat"; Set-Content -Path $batPathPC -Value $regScriptPC -Encoding UTF8
-                Start-Process cmd.exe -ArgumentList "/c `"$batPathPC`"" -Verb RunAs
-            }
-        } catch { [System.Windows.Forms.MessageBox]::Show("Blad: $_", "Blad") }
+    $LogBox.Clear()
+    $BtnExe.Enabled = $false
+    $BtnAll.Enabled = $false
+    $BtnNone.Enabled = $false
+    $ProgressBar.Style = "Blocks"
+    $ProgressBar.Value = 0
+    $ProgressBar.Maximum = [Math]::Max(1, $sysTasksChecked.Count + $appsChecked.Count)
+
+    if ($Check1.Checked) { Step "WinUtil (Chris Titus)" { Start-Process powershell.exe -ArgumentList "-NoProfile -NoExit -Command `"irm 'https://christitus.com/win' | iex`"" } }
+    if ($Check2.Checked) { Step "Aktywator Windows (MAS)" { Start-Process powershell.exe -ArgumentList "-NoProfile -NoExit -Command `"irm 'https://get.activated.win' | iex`"" } }
+    if ($Check3.Checked) {
+        Step "Ustawienia OEM (FoxFix.it)" {
+            $p = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\OEMInformation"
+            if (-not (Test-Path $p)) { New-Item -Path $p -Force | Out-Null }
+            Set-ItemProperty -Path $p -Name "Manufacturer" -Value "FoxFix.it" -Force
+            Set-ItemProperty -Path $p -Name "SupportPhone" -Value "572 571 704" -Force
+            Set-ItemProperty -Path $p -Name "SupportURL" -Value "https://foxfix.it/" -Force
+        }
     }
+    if ($Check4.Checked) {
+        Step "Usun 'Dowiedz sie wiecej o tym obrazie'" {
+            Set-RegDword "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel" "{2cc5ca98-6485-489a-920e-b3e88a6ccce3}" 1
+        }
+    }
+    if ($Check6.Checked) { Step "Otwarcie ustawien UAC" { Start-Process "UserAccountControlSettings.exe" } }
+    if ($Check7.Checked) { Step "Otwarcie Panelu Sterowania" { Start-Process "control.exe" } }
+    if ($Check10.Checked) { Step "Otwarcie panelu BitLocker" { Start-Process "control.exe" -ArgumentList "/name Microsoft.BitLockerDriveEncryption" } }
+    if ($CheckBattery.Checked) {
+        Step "Raport baterii" {
+            $reportPath = "$env:USERPROFILE\Desktop\Battery_Report.html"
+            Start-Process powercfg -ArgumentList "/batteryreport /output `"$reportPath`"" -NoNewWindow -Wait
+            if (Test-Path $reportPath) { Start-Process $reportPath }
+        }
+    }
+    if ($Check8.Checked) {
+        Step "Folder 'Programy' na pulpicie" {
+            $programsFolder = Join-Path ([Environment]::GetFolderPath("Desktop")) "Programy"
+            if (-not (Test-Path $programsFolder)) { New-Item -ItemType Directory -Path $programsFolder | Out-Null }
+        }
+    }
+    if ($Check9.Checked) {
+        Step "Pokazanie ikony 'Moj komputer'" {
+            Set-RegDword "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel" "{20D04FE0-3AEA-1069-A2D8-08002B30309D}" 0
+        }
+    }
+    if ($CheckPower.Checked) { Step "Plan zasilania: Wysoka wydajnosc" { Set-HighPerformancePlan } }
+    if ($CheckDebloat.Checked) { Step "Debloat Windows" { Invoke-Debloat } }
+    if ($CheckWuBlock.Checked) { Step "Blokada aktualizacji Windows (~30 lat)" { Block-WindowsUpdate } }
+    if ($CheckWuUnblock.Checked) { Step "Aktywacja aktualizacji Windows" { Unblock-WindowsUpdate } }
+
+    if ($appsChecked.Count -gt 0) {
+        Write-Log "--- Winget: odswiezanie zrodel ---"
+        $StatusLabel.Text = "Odswiezanie zrodel winget..."
+        [System.Windows.Forms.Application]::DoEvents()
+        try { winget source update | Out-Null } catch {}
+        foreach ($app in $appsChecked) {
+            if ($app.Id) {
+                Step "Instalacja: $($app.Name)" { Install-WingetApp -Name $app.Name -Id $app.Id }
+            } elseif ($app.Url) {
+                Step "Otwarcie strony: $($app.Name)" { Start-Process $app.Url }
+            }
+        }
+    }
+
+    $StatusLabel.Text = "Zakonczono."
+    Write-Log "--- Zakonczono ---"
+    $BtnExe.Enabled = $true
+    $BtnAll.Enabled = $true
+    $BtnNone.Enabled = $true
+    [System.Windows.Forms.MessageBox]::Show("Wszystkie zadania zostaly wykonane. Szczegoly w logu.", "FoxFix - Gotowe")
 })
-$Form.Controls.Add($BtnExe)
 
 $Form.ShowDialog() | Out-Null
